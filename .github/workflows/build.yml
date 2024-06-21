@@ -1,0 +1,306 @@
+##################################################################################################
+# 
+# 
+# Pipeline to create aibox-kitting debian package
+# 
+#
+###################################################################################################
+
+name: "Debian package builder 🤖"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Select the release type: patch, minor, or major'
+        required: true
+        default: 'patch'
+
+env:
+  AWS_DEFAULT_REGION: ap-northeast-1
+  S3_UPLOAD_BUCKET: edgeai-core/releases/DBUS_SERVER
+  PUSH_BRANCH: ${{github.ref_name}}
+  ARCHIVE_NAME: aibox-dbus-server
+
+jobs:
+  increment-version:
+    runs-on: ubuntu-22.04
+    steps:
+      # Checkout develop branch
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Generate Release Notes
+        id: draft_release
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: true
+
+      - name: Extract Release Notes
+        id: extract_notes
+        run: |
+          echo "::set-output name=notes::$(jq -r '.body' $GITHUB_ENV)"
+
+      - name: Use Release Notes in another step
+        run: |
+          echo "Generated release notes:"
+          echo "${{ steps.extract_notes.outputs.notes }}"
+      # Maybe: dch -v "1.0.0-1" "${{ steps.extract_notes.outputs.notes }}"
+    
+  # create-dpkg:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     # Run this action on the ARM64 platform
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
+  #       with:
+  #         platforms: linux/arm64
+      
+  #     # Install Debian package tool and Git flow tool
+  #     - name: Install APT packages
+  #       run: |
+  #         sudo apt-get update 
+  #         sudo apt-get -y install build-essential debhelper devscripts equivs dh-virtualenv dpkg-dev git-flow
+
+  #     # Install Python packages
+  #     - name: Install Python packages
+  #       run: |
+  #         sudo pip3 install -U pip virtualenv
+      
+  #     # Checkout develop branch
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         ref: develop
+  #         fetch-depth: 0
+      
+  #     - name: Build Debian package
+  #       id: build_package
+  #       run: |
+  #         cd ${GITHUB_WORKSPACE}/aibox-dbus-server
+  #         dpkg-buildpackage -uc -b
+  #         debian_package=$(ls -1 ${GITHUB_WORKSPACE}/*.deb)
+  #         echo "debian_package=${debian_package}" >> $GITHUB_OUTPUT
+
+  #     - name: Use Debian package in next step
+  #       run: |
+  #         echo "Debian package path: ${{ steps.build_package.outputs.debian_package }}"
+          
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v3
+      #   with:
+      #     aws-access-key-id: ${{ secrets.SOL_AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.SOL_AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    
+      # # Setup User information of git command
+      # - name: Set up Git
+      #   run: |
+      #     git config --global user.name "${GITHUB_ACTOR}"
+      #     git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+      
+      # # Set Git flow branch names and version tag prefix
+      # - name: Set Gitflow Branch Names
+      #   run: |
+      #     git config gitflow.branch.master main
+      #     git config gitflow.branch.develop develop
+      #     echo "# Git configuration:"
+      #     cat .git/config
+      #     echo "# Repository branch list:"
+      #     git branch -a
+      
+      # # Initialize Git flow
+      # - name: Initialize Gitflow
+      #   run: |
+      #     git fetch origin main
+      #     git flow init -d
+      
+      # # Get the latest release tag name from this repo
+      # - name: Get previous tag
+      #   id: pre_tag
+      #   run: |
+      #     PREV_TAG=$(curl -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name | sed s'/null//g')
+      #     echo "# Output:"
+      #     echo "pre_tag=$PREV_TAG"
+      #     echo "pre_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+      
+      # # Increment version number
+      # - name: Determine new version
+      #   id: version
+      #   run: |
+      #     RELEASE_TYPE=${{ github.event.inputs.release_type }}
+      #     CURRENT_VERSION=${{ steps.pre_tag.outputs.pre_tag }}
+      #     echo "# Selected release type: $RELEASE_TYPE"
+      #     echo "# Current version: $CURRENT_VERSION"
+
+      #     if [ "$RELEASE_TYPE" = "patch" ]; then
+      #       NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
+      #     elif [ "$RELEASE_TYPE" = "minor" ]; then
+      #       NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1')
+      #     elif [ "$RELEASE_TYPE" = "major" ]; then
+      #       NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0;} 1')
+      #     else
+      #       echo "Invalid release_type provided. Allowed values are patch, minor, or major."
+      #       exit 1
+      #     fi
+
+      #     echo "# Output:"
+      #     echo "version=$NEW_VERSION"
+      #     echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          
+      # # Make a new release branch
+      # - name: Start Gitflow release
+      #   run: |
+      #     git flow release start ${{ steps.version.outputs.version }}
+      #     echo "# Repository branch list:"
+      #     git branch -a
+      
+      # # Increment the version in the repository files 
+      # - name: Bump package version
+      #   id: update_version
+      #   run: |
+      #     prev_version=$(echo "${{ steps.pre_tag.outputs.pre_tag }}" | sed 's/^v//')
+      #     new_version=$(echo "${{ steps.version.outputs.version }}" | sed 's/^v//')
+      #     echo "# New version: $new_version"
+      #     echo $new_version > VERSION.txt
+      #     echo "# VERSION.txt:"
+      #     cat VERSION.txt
+          
+      #     sed -i "s/Version: $prev_version/Version: $new_version/" aibox-dbus-server/DEBIAN/control
+      #     echo "# aibox-dbus-server/DEBIAN/control:"
+      #     cat aibox-dbus-server/DEBIAN/control
+          
+      # # Generate release note
+      # - name: Generate release note
+      #   id: release_note
+      #   run: |
+      #     echo 'RELEASE_NOTE_RESULT<<EOF' >> $GITHUB_ENV
+      #     curl -X POST -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/${{ github.repository }}/releases/generate-notes -d '{"tag_name":"${{ steps.version.outputs.version }}", "previous_tag_name":"${{ steps.pre_tag.outputs.pre_tag }}"}' | jq .body | sed 's/"//g' | sed 's/\\n/\n/g' >> $GITHUB_ENV
+      #     echo 'EOF' >> $GITHUB_ENV
+      #     echo "# Output:"
+      #     echo "$GITHUB_ENV"
+      
+      # Build Debian package
+      
+      # # Merge the release branch and push the changes
+      # - name: Finish Gitflow release
+      #   run: |
+      #     git add .
+      #     git commit -m "bump: ${{ steps.version.outputs.version }}"
+      #     git flow release finish -m "Release ${{ steps.version.outputs.version }}" ${{ steps.version.outputs.version }}
+      #     git push origin $(git config gitflow.branch.master)
+      #     git push origin $(git config gitflow.branch.develop)
+      
+      # # Create the new release
+      # - name: Create a release
+      #   id: create_release
+      #   uses: ncipollo/release-action@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag: ${{ steps.version.outputs.version }}
+      #     name: Release ${{ steps.version.outputs.version }}
+      #     body: ${{ env.RELEASE_NOTE_RESULT }}
+      #     artifacts: aibox-dbus-server.deb
+      #     artifactErrorsFailBuild: true
+      #     draft: false
+      #     prerelease: false
+          
+      # # Attach the artifact to this workflow run
+      # - name: Upload package artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: aibox-dbus-server.deb
+      #     path: aibox-dbus-server.deb
+          
+      # # Push to S3
+      # - name: Create the artifact
+      #   run: |
+      #     tar -czf  ${{ env.ARCHIVE_NAME}}-${{ steps.version.outputs.version }}.tar.gz aibox-dbus-server.deb
+
+      # - name: Upload image tarball to S3
+      #   run: |
+      #     aws s3 cp ./${{ env.ARCHIVE_NAME}}-${{ steps.version.outputs.version }}.tar.gz s3://${{ env.S3_UPLOAD_BUCKET}}/
+      #     aws s3 cp ./${{ env.ARCHIVE_NAME}}-${{ steps.version.outputs.version }}.tar.gz s3://${{ env.S3_UPLOAD_BUCKET}}/${{ env.ARCHIVE_NAME}}-latest.tar.gz
+
+      # # Notify the release via Slack
+      # - name: Send Slack notification
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.EDGEAI_DEV_SLACK_WEBHOOK }}
+      #     SLACK_MESSAGE: |
+      #       {
+      #         "blocks": [
+      #           {
+      #             "type": "header",
+      #             "text": {
+      #               "type": "plain_text",
+      #               "text": "EdgeAI Appliance D-Bus Server 🚌",
+      #               "emoji": true
+      #             }
+      #           },
+      #           {
+      #             "type": "context",
+      #             "elements": [
+      #               {
+      #                 "type": "plain_text",
+      #                 "text": "A new Debian package has been released 📦",
+      #                 "emoji": true
+      #               }
+      #             ]
+      #           },
+      #           {
+      #             "type": "context",
+      #             "elements": [
+      #               {
+      #                 "type": "mrkdwn",
+      #                 "text": "*Tags* : ${{ steps.version.outputs.version }}, latest \n *SHA*: ${{ github.sha }}"
+      #               }
+      #             ]
+      #           },
+      #           {
+      #             "type": "divider"
+      #           },
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "Download the Debian package"
+      #             },
+      #             "accessory": {
+      #               "type": "button",
+      #               "text": {
+      #                 "type": "plain_text",
+      #                 "text": "Open",
+      #                 "emoji": true
+      #               },
+      #               "value": "download_package",
+      #               "url": "https://github.com/edge-ai/aibox-dbus-server/releases/download/{{ steps.version.outputs.version }}/aibox-dbus-server.deb",
+      #               "action_id": "button-action-download-package"
+      #             }
+      #           },
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "View on Github"
+      #             },
+      #             "accessory": {
+      #               "type": "button",
+      #               "text": {
+      #                 "type": "plain_text",
+      #                 "text": "Open",
+      #                 "emoji": true
+      #               },
+      #               "value": "open_github_repo",
+      #               "url": "https://github.com/edge-ai/aibox-dbus-server",
+      #               "action_id": "button-action-github"
+      #             }
+      #           }
+      #         ]
+      #       }
+      #   run: |
+      #     curl -X POST -H 'Content-type: application/json' --data "${SLACK_MESSAGE}" $SLACK_WEBHOOK_URL
