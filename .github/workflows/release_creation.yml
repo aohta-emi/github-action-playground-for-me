@@ -1,0 +1,65 @@
+name: "Create release branch"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        type: choice
+        description: "Select the release type"
+        options:
+          - patch
+          - minor
+          - major
+
+env:
+  RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+
+jobs:
+  check-release-branch:
+    name: Check if release branch already exists
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if release branch exists
+        run: |
+          if git show-ref --verify --quiet "refs/heads/release"; then
+            echo "::error::Release branch already exists."
+            exit 1
+          fi
+
+  increment-version-number:
+    name: Increment the version number
+    runs-on: ubuntu-latest
+    needs: check-release-branch
+    outputs:
+      new_version: ${{ steps.set-version.outputs.new_version }}
+    steps:
+      - name: Check if release branch exists
+        run: |
+          RELEASE_TYPE=${{ env.RELEASE_TYPE }}
+          CURRENT_VERSION="${{ steps.pre_tag.outputs.pre_tag }}"
+          echo $RELEASE_TYPE
+          echo $CURRENT_VERSION
+
+          # If no release exsits yet, we will start version from "v0.0.0"
+          # NOTE: Better to make "v0.0.0" manually first when we create the repo
+          if [ "$CURRENT_VERSION" = "" ]; then
+            RELEASE_TYPE="major"
+            CURRENT_VERSION="v0.0.0"
+          fi
+
+          # Increment the version number
+          if [ "$RELEASE_TYPE" = "patch" ]; then
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
+          elif [ "$RELEASE_TYPE" = "minor" ]; then
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1')
+          elif [ "$RELEASE_TYPE" = "major" ]; then
+            CURRENT_VERSION="$(echo $CURRENT_VERSION | cut -c 2- )"
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0;} 1')
+          else
+            echo "Invalid release_type provided. Allowed values are patch, minor, or major."
+            exit 1
+          fi
+          echo $NEW_VERSION
+
+          # Output the new version number
+          echo "version=$(echo $NEW_VERSION)" >> "$GITHUB_OUTPUT"
