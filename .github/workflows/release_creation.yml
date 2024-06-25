@@ -33,19 +33,34 @@ jobs:
     outputs:
       new_version: ${{ steps.set-version.outputs.new_version }}
     steps:
-      - name: Check if release branch exists
+      - name: Get current version number from the latest release
+        uses: actions/github-script@v7
+        id: get_release
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await github.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            console.log(response.data.tag_name);
+            return response.data.tag_name;
+            
+      - name: Increment the version number
         run: |
+          # Get release type selection
           RELEASE_TYPE=${{ env.RELEASE_TYPE }}
-          CURRENT_VERSION="${{ steps.pre_tag.outputs.pre_tag }}"
           echo $RELEASE_TYPE
-          echo $CURRENT_VERSION
 
-          # If no release exsits yet, we will start version from "v0.0.0"
-          # NOTE: Better to make "v0.0.0" manually first when we create the repo
+          # Get current version number
+          CURRENT_VERSION="${{ steps.get_release.outputs.result }}"
           if [ "$CURRENT_VERSION" = "" ]; then
-            RELEASE_TYPE="major"
+            # If no release exists yet, we will start version from "v0.0.0"
+            # NOTE: Better to make "v0.0.0" manually first when we create the repo
+            echo "No release exists in this repo. starting from v0.0.0..."
             CURRENT_VERSION="v0.0.0"
           fi
+          echo $CURRENT_VERSION
 
           # Increment the version number
           if [ "$RELEASE_TYPE" = "patch" ]; then
