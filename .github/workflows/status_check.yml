@@ -1,0 +1,19 @@
+name: Prevent direct changes to the version file
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  prevent-version-change:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check for changelog changes
+      run: |
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q 'version.txt'; then
+          echo "version changes are not allowed. Please revert them."
+          exit 1
+        fi
