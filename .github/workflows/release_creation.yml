@@ -15,7 +15,7 @@ env:
   RELEASE_TYPE: ${{ github.event.inputs.release_type }}
 
 jobs:
-  check-release-branch:
+  check-release-exists:
     name: Check if release branch already exists
     runs-on: ubuntu-latest
     steps:
@@ -26,10 +26,10 @@ jobs:
             exit 1
           fi
 
-  increment-version-number:
+  increment-version:
     name: Increment the version number
     runs-on: ubuntu-latest
-    needs: check-release-branch
+    needs: check-release-exists
     outputs:
       new_version: ${{ steps.set-version.outputs.new_version }}
     steps:
@@ -78,3 +78,13 @@ jobs:
 
           # Output the new version number
           echo "version=$(echo $NEW_VERSION)" >> "$GITHUB_OUTPUT"
+
+  create-release:
+    name: Create new release branch
+    runs-on: ubuntu-latest
+    needs: increment-version
+    steps:
+      - name: Create new release branch
+        run: |
+          git checkout -b release/v${{ needs.increment-version.outputs.new_version }}
+          git push origin release/v${{ needs.increment-version.outputs.new_version }}
