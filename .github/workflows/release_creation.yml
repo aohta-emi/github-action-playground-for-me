@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check if release branch exists
+        id: check-branch
         run: |
           if git show-ref --verify --quiet "refs/heads/release"; then
             echo "::error::Release branch already exists."
@@ -47,6 +48,7 @@ jobs:
             return response.data.tag_name;
             
       - name: Increment the version number
+        id: set-version
         run: |
           # Get release type selection
           RELEASE_TYPE=${{ env.RELEASE_TYPE }}
@@ -85,6 +87,8 @@ jobs:
     needs: increment-version
     steps:
       - name: Create new release branch
+        id: create-branch
         run: |
-          git checkout -b release/${{ needs.increment-version.outputs.new_version }}
-          git push origin release/${{ needs.increment-version.outputs.new_version }}
+          echo ${{ needs.increment-version.outputs.new_version }}
+          # git checkout -b release/${{ needs.increment-version.outputs.new_version }}
+          # git push origin release/${{ needs.increment-version.outputs.new_version }}
