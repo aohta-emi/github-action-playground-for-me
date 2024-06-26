@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.workflow_run.outputs.release_branch }}
 
       - name: Set up Git
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: Get release branch name
         id: get-branch
         run: |
-          BRANCH_NAME=$(echo ${{ github.event.workflow_run.head_branch }} | sed 's/release\/v//')
+          BRANCH_NAME=$(echo ${{ github.event.workflow_run.outputs.release_branch }} | sed 's/release\/v//')
           echo "branch_name=${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: Extract version number from branch name
