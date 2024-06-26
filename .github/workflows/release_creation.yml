@@ -22,6 +22,8 @@ jobs:
       - name: Checkout repositort
         id: checkout-repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
           
       - name: Check if release branch exists
         id: check-branch
