@@ -25,26 +25,35 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ ! failure() }}
     steps:
+      - name: Get release branch name
+        id: get-branch
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branches = await github.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+            if (releaseBranches.length !== 1) {
+              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+            }
+            return releaseBranches[0].name;
+            
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.outputs.release_branch }}
+          ref: ${{ steps.get-branch.outputs.result }}
 
       - name: Set up Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Get release branch name
-        id: get-branch
-        run: |
-          BRANCH_NAME=$(echo ${{ github.event.workflow_run.outputs.release_branch }} | sed 's/release\/v//')
-          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_ENV
-
       - name: Extract version number from branch name
         id: get-version
         run: |
-          VERSION=$(echo "${{ env.branch_name }}" | sed 's/release\/v//')
+          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\/v//')
           echo "version=${VERSION}" >> $GITHUB_ENV
 
       - name: Update version.txt
@@ -55,20 +64,20 @@ jobs:
 
       - name: Push changes to release branch
         run: |
-          git push origin "${{ env.branch_name }}"
+          git push origin "${{ steps.get-branch.outputs.result }}"
 
       - name: Merge release branch to main
         run: |
           git checkout main
-          git merge --no-ff "${{ env.branch_name }}"
+          git merge --no-ff "${{ steps.get-branch.outputs.result }}"
           git push origin main
 
       - name: Merge release branch to develop
         run: |
           git checkout develop
-          git merge --no-ff "${{ env.branch_name }}"
+          git merge --no-ff "${{ steps.get-branch.outputs.result }}"
           git push origin develop
 
       - name: Delete release branch
         run: |
-          git push origin --delete "${{ env.branch_name }}"
+          git push origin --delete "${{ steps.get-branch.outputs.result }}"
