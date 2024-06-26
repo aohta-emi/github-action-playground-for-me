@@ -26,8 +26,8 @@ jobs:
       - name: Check if release branch exists
         id: check-branch
         run: |
-          echo git branch -r
-          echo git branch -r | grep "origin/release/"
+          echo "$(git branch -r)"
+          echo "$(git branch -r | grep "origin/release/")"
           if git branch -r | grep "origin/release/" > /dev/null; then
             echo "::error::A release branch already exists."
             exit 1
