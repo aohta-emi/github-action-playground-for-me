@@ -19,11 +19,15 @@ jobs:
     name: Check if release branch already exists
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repositort
+        id: checkout-repo
+        uses: actions/checkout@v4
+          
       - name: Check if release branch exists
         id: check-branch
         run: |
-          if git show-ref --verify --quiet "refs/heads/release"; then
-            echo "::error::Release branch already exists."
+          if git branch -r | grep "origin/release/" > /dev/null; then
+            echo "::error::A release branch already exists."
             exit 1
           fi
 
