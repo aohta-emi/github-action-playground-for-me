@@ -27,6 +27,8 @@ jobs:
     name: QA Check on release branch
     runs-on: ubuntu-latest
     if: ${{ ! failure() }}
+    outputs:
+      release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
     steps:
       - name: Get release branch name
         id: get-branch
