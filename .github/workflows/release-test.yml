@@ -1,0 +1,34 @@
+name: Test on Release Branch
+
+on:
+  push:
+    branches:
+      - release/**
+
+jobs:
+  qa-check:
+    name: QA Check on Release Branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run QA tests
+        run: |
+          echo "Running QA tests on release branch..."
+          # Replace this line with actual QA tests
+          echo "do some test"
+          
+          # Simulate test success/failure
+          TEST_RESULT=$(( RANDOM % 2 ))
+          if [ $TEST_RESULT -eq 0 ]; then
+            echo "QA tests passed."
+          else
+            echo "::error::QA tests failed."
+            exit 1
+          fi
+
+      - name: Notify success (Only runs if previous steps succeed)
+        if: success()
+        run: echo "QA tests succeeded. Proceed to the next workflow."
