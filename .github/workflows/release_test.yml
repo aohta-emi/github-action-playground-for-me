@@ -27,16 +27,18 @@ jobs:
     name: QA Check on release branch
     runs-on: ubuntu-latest
     if: ${{ ! failure() }}
+    outputs:
+      release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.workflow_run.outputs.release_branch }}
 
       - name: Run QA tests (TODO)
         id: run-qa-tests
         run: |
-          echo "Running QA tests on branch ${{ github.event.workflow_run.head_branch }} ..."
+          echo "Running QA tests on branch ${{ github.event.workflow_run.outputs.release_branch }} ..."
           # Replace this line with actual QA tests
           echo "do some test"
           
