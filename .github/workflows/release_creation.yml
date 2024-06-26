@@ -35,73 +35,73 @@ jobs:
             exit 1
           fi
 
-  # increment-version:
-  #   name: Increment the version number
-  #   runs-on: ubuntu-latest
-  #   needs: check-release-exists
-  #   outputs:
-  #     new_version: ${{ steps.set-version.outputs.new_version }}
-  #   steps:
-  #     - name: Get current version number from the latest release
-  #       id: get_release
-  #       uses: actions/github-script@v7
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         script: |
-  #           const response = await github.rest.repos.getLatestRelease({
-  #             owner: context.repo.owner,
-  #             repo: context.repo.repo
-  #           });
-  #           console.log(response.data.tag_name);
-  #           return response.data.tag_name;
+  increment-version:
+    name: Increment the version number
+    runs-on: ubuntu-latest
+    needs: check-release-exists
+    outputs:
+      new_version: ${{ steps.set-version.outputs.new_version }}
+    steps:
+      - name: Get current version number from the latest release
+        id: get_release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            console.log(response.data.tag_name);
+            return response.data.tag_name;
             
-  #     - name: Increment the version number
-  #       id: set-version
-  #       run: |
-  #         # Get release type selection
-  #         RELEASE_TYPE=${{ env.RELEASE_TYPE }}
-  #         echo $RELEASE_TYPE
+      - name: Increment the version number
+        id: set-version
+        run: |
+          # Get release type selection
+          RELEASE_TYPE=${{ env.RELEASE_TYPE }}
+          echo $RELEASE_TYPE
 
-  #         # Get current version number
-  #         CURRENT_VERSION="${{ steps.get_release.outputs.result }}"
-  #         if [ "$CURRENT_VERSION" = "" ]; then
-  #           # If no release exists yet, we will start version from "v0.0.0"
-  #           # NOTE: Better to make "v0.0.0" manually first when we create the repo
-  #           echo "No release exists in this repo. starting from v0.0.0..."
-  #           CURRENT_VERSION="v0.0.0"
-  #         fi
-  #         echo $CURRENT_VERSION
+          # Get current version number
+          CURRENT_VERSION="${{ steps.get_release.outputs.result }}"
+          if [ "$CURRENT_VERSION" = "" ]; then
+            # If no release exists yet, we will start version from "v0.0.0"
+            # NOTE: Better to make "v0.0.0" manually first when we create the repo
+            echo "No release exists in this repo. starting from v0.0.0..."
+            CURRENT_VERSION="v0.0.0"
+          fi
+          echo $CURRENT_VERSION
 
-  #         # Increment the version number
-  #         if [ "$RELEASE_TYPE" = "patch" ]; then
-  #           NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
-  #         elif [ "$RELEASE_TYPE" = "minor" ]; then
-  #           NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1')
-  #         elif [ "$RELEASE_TYPE" = "major" ]; then
-  #           NEW_VERSION=v$(echo "$CURRENT_VERSION" | cut -c 2- | awk -F. -v OFS=. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0;} 1')
-  #         else
-  #           echo "Invalid release_type provided. Allowed values are patch, minor, or major."
-  #           exit 1
-  #         fi
-  #         echo $NEW_VERSION
+          # Increment the version number
+          if [ "$RELEASE_TYPE" = "patch" ]; then
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
+          elif [ "$RELEASE_TYPE" = "minor" ]; then
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1')
+          elif [ "$RELEASE_TYPE" = "major" ]; then
+            NEW_VERSION=v$(echo "$CURRENT_VERSION" | cut -c 2- | awk -F. -v OFS=. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0;} 1')
+          else
+            echo "Invalid release_type provided. Allowed values are patch, minor, or major."
+            exit 1
+          fi
+          echo $NEW_VERSION
 
-  #         # Output the new version number
-  #         echo "new_version=$(echo $NEW_VERSION)" >> "$GITHUB_OUTPUT"
+          # Output the new version number
+          echo "new_version=$(echo $NEW_VERSION)" >> "$GITHUB_OUTPUT"
 
-  # create-release:
-  #   name: Create new release branch
-  #   runs-on: ubuntu-latest
-  #   needs: increment-version
-  #   steps:
-  #     - name: Checkout develop branch
-  #       id: checkout-develop
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: develop
+  create-release:
+    name: Create new release branch
+    runs-on: ubuntu-latest
+    needs: increment-version
+    steps:
+      - name: Checkout develop branch
+        id: checkout-develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
           
-  #     - name: Create new release branch
-  #       id: create-release
-  #       run: |
-  #         echo ${{ needs.increment-version.outputs.new_version }}
-  #         git checkout -b release/${{ needs.increment-version.outputs.new_version }}
-  #         git push origin release/${{ needs.increment-version.outputs.new_version }}
+      - name: Create new release branch
+        id: create-release
+        run: |
+          echo ${{ needs.increment-version.outputs.new_version }}
+          git checkout -b release/${{ needs.increment-version.outputs.new_version }}
+          git push origin release/${{ needs.increment-version.outputs.new_version }}
