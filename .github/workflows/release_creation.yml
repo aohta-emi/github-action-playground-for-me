@@ -70,7 +70,7 @@ jobs:
           elif [ "$RELEASE_TYPE" = "minor" ]; then
             NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1')
           elif [ "$RELEASE_TYPE" = "major" ]; then
-            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0;} 1')
+            NEW_VERSION=v$(echo "$CURRENT_VERSION" | cut -c 2- | awk -F. -v OFS=. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0;} 1')
           else
             echo "Invalid release_type provided. Allowed values are patch, minor, or major."
             exit 1
