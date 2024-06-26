@@ -1,4 +1,4 @@
-name: Test on Release Branch
+name: Test on release branch
 
 on:
   push:
@@ -24,14 +24,14 @@ jobs:
           fi
       
   qa-check:
-    name: QA Check on Release Branch
+    name: QA Check on release branch
     runs-on: ubuntu-latest
     if: ${{ ! failure() }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run QA tests
+      - name: Run QA tests (TODO)
         id: run-qa-tests
         run: |
           echo "Running QA tests on release branch..."
@@ -39,7 +39,8 @@ jobs:
           echo "do some test"
           
           # Simulate test success/failure
-          TEST_RESULT=$(( RANDOM % 2 ))
+          # TEST_RESULT=$(( RANDOM % 2 ))
+          TEST_RESULT=0
           if [ $TEST_RESULT -eq 0 ]; then
             echo "QA tests passed."
           else
@@ -47,7 +48,8 @@ jobs:
             exit 1
           fi
 
-      - name: Notify success (Only runs if previous steps succeed)
+      - name: Notify success
         id: notify-success
         if: success()
-        run: echo "QA tests succeeded. Proceed to the next workflow."
+        run: |
+          echo "QA tests succeeded. Proceed to the next workflow."
