@@ -101,5 +101,5 @@ jobs:
   #       id: create-release
   #       run: |
   #         echo ${{ needs.increment-version.outputs.new_version }}
-          git checkout -b release/${{ needs.increment-version.outputs.new_version }}
-          git push origin release/${{ needs.increment-version.outputs.new_version }}
+  #         git checkout -b release/${{ needs.increment-version.outputs.new_version }}
+  #         git push origin release/${{ needs.increment-version.outputs.new_version }}
