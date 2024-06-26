@@ -4,17 +4,35 @@ on:
   push:
     branches:
       - release/**
+  workflow_run:
+    workflows: ["Create release branch"]
+    types:
+      - completed
 
 jobs:
+  check-previous-workflow:
+    name: Check if the previous workflow succeeded
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_run' }}
+    steps:
+      - name: Check the result of the previous workflow
+        id: check-prev-result
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "::error::The triggering workflow 'Create release branch' did not pass."
+            exit 1
+          fi
+      
   qa-check:
     name: QA Check on Release Branch
     runs-on: ubuntu-latest
-
+    needs: check-previous-workflow
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run QA tests
+        id: run-qa-tests
         run: |
           echo "Running QA tests on release branch..."
           # Replace this line with actual QA tests
@@ -30,5 +48,6 @@ jobs:
           fi
 
       - name: Notify success (Only runs if previous steps succeed)
+        id: notify-success
         if: success()
         run: echo "QA tests succeeded. Proceed to the next workflow."
