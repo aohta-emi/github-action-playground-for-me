@@ -27,18 +27,31 @@ jobs:
     name: QA Check on release branch
     runs-on: ubuntu-latest
     if: ${{ ! failure() }}
-    outputs:
-      release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
     steps:
+      - name: Get release branch name
+        id: get-branch
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branches = await github.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+            if (releaseBranches.length !== 1) {
+              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+            }
+            return releaseBranches[0].name;
+            
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.outputs.release_branch }}
+          ref: ${{ steps.get-branch.outputs.result }}
 
       - name: Run QA tests (TODO)
         id: run-qa-tests
         run: |
-          echo "Running QA tests on branch ${{ github.event.workflow_run.outputs.release_branch }} ..."
+          echo "Running QA tests on branch ${{ steps.get-branch.outputs.result }} ..."
           # Replace this line with actual QA tests
           echo "do some test"
           
