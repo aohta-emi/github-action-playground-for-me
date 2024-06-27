@@ -34,6 +34,7 @@ jobs:
         id: get-branch
         uses: actions/github-script@v6
         with:
+          result-encoding: string
           script: |
             const branches = await github.rest.repos.listBranches({
               owner: context.repo.owner,
@@ -43,7 +44,7 @@ jobs:
             if (releaseBranches.length !== 1) {
               throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
             }
-            return releaseBranches[0].name.replace(/"/g, "");
+            return releaseBranches[0].name;
 
       - name: Echo release branch name
         run: echo "Release branch name is ${{ steps.get-branch.outputs.result }}"
