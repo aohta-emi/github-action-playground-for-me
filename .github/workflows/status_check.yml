@@ -1,4 +1,5 @@
 name: PR status check
+run-name: "Check: Prevent version changes in PRs"
 
 on:
   pull_request:

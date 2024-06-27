@@ -1,4 +1,5 @@
-name: "Create release branch"
+name: Create release branch
+run-name: "Release: Create branch for ${{ github.event.inputs.release_type }} update"
 
 on:
   workflow_dispatch:
