@@ -29,6 +29,7 @@ jobs:
         id: get-branch
         uses: actions/github-script@v6
         with:
+          result-encoding: string
           script: |
             const branches = await github.rest.repos.listBranches({
               owner: context.repo.owner,
