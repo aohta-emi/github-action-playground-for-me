@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "Deploy: make new release for ${{ github.ref_name }}"
+run-name: "Deploy: Make new release for ${{ github.ref_name }}"
 
 on:
   push:
