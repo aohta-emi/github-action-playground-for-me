@@ -96,11 +96,20 @@ jobs:
     outputs:
       release_branch: ${{ steps.create-release.outputs.release_branch }}
     steps:
+      - name: Set up app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BOT_APPID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Checkout develop branch
         id: checkout-develop
         uses: actions/checkout@v4
         with:
           ref: develop
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
           
       - name: Create new release branch
         id: create-release

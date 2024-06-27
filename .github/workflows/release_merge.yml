@@ -47,12 +47,21 @@ jobs:
               throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
             }
             return releaseBranches[0].name;
-            
+
+      - name: Set up app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BOT_APPID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
           
       - name: Extract version number from branch name
         id: get-version
@@ -64,7 +73,7 @@ jobs:
         run: |
           echo "${{ env.version }}" > version.txt
           git add version.txt
-          git commit -m "Update version to ${{ env.version }}"
+          git commit -m "chore: Bump version to v${{ env.version }}"
 
       - name: Push changes to release branch
         run: |
@@ -96,12 +105,21 @@ jobs:
               throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
             }
             return releaseBranches[0].name;
-            
+
+      - name: Set up app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BOT_APPID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Merge release branch to main
         run: |
@@ -114,6 +132,12 @@ jobs:
           git checkout develop
           git merge --no-ff "${{ steps.get-branch.outputs.result }}"
           git push origin develop
+
+      - name: Tag the main branch
+        run: |
+          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\///')
+          git tag -a ${version} -m "Release ${version}"
+          git push origin ${version}
 
       - name: Delete release branch
         run: |
