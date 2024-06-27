@@ -64,7 +64,7 @@ jobs:
         run: |
           echo "${{ env.version }}" > version.txt
           git add version.txt
-          git commit -m "Update version to ${{ env.version }}"
+          git commit -m "chore: Bump version to v${{ env.version }}"
 
       - name: Push changes to release branch
         run: |
@@ -114,6 +114,12 @@ jobs:
           git checkout develop
           git merge --no-ff "${{ steps.get-branch.outputs.result }}"
           git push origin develop
+
+      - name: Tag the main branch
+        run: |
+          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\///')
+          git tag -a ${version} -m "Release ${version}"
+          git push origin ${version}
 
       - name: Delete release branch
         run: |
