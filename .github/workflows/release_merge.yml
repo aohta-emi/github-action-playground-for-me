@@ -71,7 +71,7 @@ jobs:
   release-merge:
     name: Merge Release Branch to main and develop
     runs-on: ubuntu-latest
-    if: ${{ ! failure() }}
+    needs: bump-version
     steps:
       - name: Get release branch name
         id: get-branch
