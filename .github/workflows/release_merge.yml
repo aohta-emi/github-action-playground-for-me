@@ -20,6 +20,53 @@ jobs:
             exit 1
           fi
 
+  bump-version:
+    name: Update changelog and bump version
+    runs-on: ubuntu-latest
+    if: ${{ ! failure() }}
+    steps:
+      - name: Get release branch name
+        id: get-branch
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const branches = await github.rest.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+            if (releaseBranches.length !== 1) {
+              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+            }
+            return releaseBranches[0].name;
+            
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.get-branch.outputs.result }}
+          
+      - name: Extract version number from branch name
+        id: get-version
+        run: |
+          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\/v//')
+          echo "version=${VERSION}" >> $GITHUB_ENV
+
+      - name: Update version.txt
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          echo "${{ env.version }}" > version.txt
+          git add version.txt
+          git commit -m "Update version to ${{ env.version }}"
+
+      - name: Push changes to release branch
+        run: |
+          git push origin "${{ steps.get-branch.outputs.result }}"
+
   release-merge:
     name: Merge Release Branch to main and develop
     runs-on: ubuntu-latest
@@ -46,27 +93,6 @@ jobs:
         with:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
-
-      - name: Set up Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-      - name: Extract version number from branch name
-        id: get-version
-        run: |
-          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\/v//')
-          echo "version=${VERSION}" >> $GITHUB_ENV
-
-      - name: Update version.txt
-        run: |
-          echo "${{ env.version }}" > version.txt
-          git add version.txt
-          git commit -m "Update version to ${{ env.version }}"
-
-      - name: Push changes to release branch
-        run: |
-          git push origin "${{ steps.get-branch.outputs.result }}"
 
       - name: Merge release branch to main
         run: |
