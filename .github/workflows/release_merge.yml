@@ -61,7 +61,6 @@ jobs:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: false
           
       - name: Extract version number from branch name
         id: get-version
@@ -119,7 +118,6 @@ jobs:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: false
 
       - name: Merge release branch to main
         run: |

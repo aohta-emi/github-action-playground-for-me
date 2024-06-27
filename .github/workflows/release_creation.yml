@@ -114,7 +114,6 @@ jobs:
         with:
           ref: develop
           token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: false
           
       - name: Create new release branch
         id: create-release
