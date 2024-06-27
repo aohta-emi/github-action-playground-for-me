@@ -1,30 +1,67 @@
 name: Merge release branch
-run-name: "Release: Merge the release branch"
+run-name: "Release: Test and merge the release branch"
 
 on:
-  workflow_run:
-    workflows: ["Test on release branch"]
-    types:
-      - completed
+  push:
+    branches:
+      - release/*
 
-jobs:
-  check-previous-workflow:
-    name: Check if the previous workflow succeeded
+jobs:      
+  qa-test:
+    name: QA test on release branch (TODO)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_run' }}
+    if: ${{ !cancelled() && !failure() }}
+    outputs:
+      release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
     steps:
-      - name: Check the result of the previous workflow
-        id: check-prev-result
+      - name: Get release branch name
+        id: get-branch
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const branches = await github.rest.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+            if (releaseBranches.length !== 1) {
+              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+            }
+            return releaseBranches[0].name;
+            
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.get-branch.outputs.result }}
+
+      - name: Run QA tests (TODO)
+        id: run-qa-tests
         run: |
-          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-            echo "::error::The triggering workflow 'Test on release branch' did not pass."
+          echo "Running QA tests on branch ${{ steps.get-branch.outputs.result }} ..."
+          # Replace this line with actual QA tests
+          echo "do some test"
+          
+          # Simulate test success/failure
+          # TEST_RESULT=$(( RANDOM % 2 ))
+          TEST_RESULT=0
+          if [ $TEST_RESULT -eq 0 ]; then
+            echo "QA tests passed."
+          else
+            echo "::error::QA tests failed."
             exit 1
           fi
+
+      - name: Notify success
+        id: notify-success
+        if: success()
+        run: |
+          echo "QA tests succeeded. Proceed to the next workflow."
 
   bump-version:
     name: Update changelog and bump version
     runs-on: ubuntu-latest
-    needs: check-previous-workflow
+    needs: qa-test
     if: ${{ !cancelled() && !failure() }}
     env:
       GIT_AUTHOR_NAME: github-actions[bot]
