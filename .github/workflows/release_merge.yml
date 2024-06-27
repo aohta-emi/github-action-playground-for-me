@@ -1,5 +1,5 @@
 name: Merge release branch
-run-name: "Release: Test and merge the release branch"
+run-name: "Release: Test and merge the branch ${{ github.ref_name }}"
 
 on:
   push:

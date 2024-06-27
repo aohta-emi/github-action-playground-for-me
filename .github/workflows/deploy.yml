@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "Deploy: make new release and upload artifacts"
+run-name: "Deploy: make new release for ${{ github.ref_name }}"
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - 'v*.*.*'
 
 jobs:    
-  deploy:
+  release:
     name: Deploy the new release
     runs-on: ubuntu-latest
     if: ${{ !cancelled() && !failure() }}
