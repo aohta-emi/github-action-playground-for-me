@@ -47,12 +47,21 @@ jobs:
               throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
             }
             return releaseBranches[0].name;
-            
+
+      - name: Set up app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BOT_APPID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
           
       - name: Extract version number from branch name
         id: get-version
@@ -96,12 +105,21 @@ jobs:
               throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
             }
             return releaseBranches[0].name;
-            
+
+      - name: Set up app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BOT_APPID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.get-branch.outputs.result }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Merge release branch to main
         run: |
