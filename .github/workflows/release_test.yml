@@ -10,7 +10,6 @@ jobs:
   qa-test:
     name: QA test on release branch
     runs-on: ubuntu-latest
-    needs: check-previous-workflow
     if: ${{ !cancelled() && !failure() }}
     outputs:
       release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
