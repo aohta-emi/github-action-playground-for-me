@@ -13,23 +13,7 @@ jobs:
     if: ${{ !cancelled() && !failure() }}
     outputs:
       release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
-    steps:
-      # - name: Get release branch name
-      #   id: get-branch
-      #   uses: actions/github-script@v7
-      #   with:
-      #     result-encoding: string
-      #     script: |
-      #       const branches = await github.rest.repos.listBranches({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #       });
-      #       const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
-      #       if (releaseBranches.length !== 1) {
-      #         throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
-      #       }
-      #       return releaseBranches[0].name;
-            
+    steps:            
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -69,22 +53,6 @@ jobs:
       GIT_COMMITTER_NAME: github-actions[bot]
       GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
     steps:
-      # - name: Get release branch name
-      #   id: get-branch
-      #   uses: actions/github-script@v7
-      #   with:
-      #     result-encoding: string
-      #     script: |
-      #       const branches = await github.rest.repos.listBranches({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #       });
-      #       const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
-      #       if (releaseBranches.length !== 1) {
-      #         throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
-      #       }
-      #       return releaseBranches[0].name;
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -118,22 +86,6 @@ jobs:
       GIT_COMMITTER_NAME: github-actions[bot]
       GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
     steps:
-      # - name: Get release branch name
-      #   id: get-branch
-      #   uses: actions/github-script@v7
-      #   with:
-      #     result-encoding: string
-      #     script: |
-      #       const branches = await github.rest.repos.listBranches({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #       });
-      #       const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
-      #       if (releaseBranches.length !== 1) {
-      #         throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
-      #       }
-      #       return releaseBranches[0].name;
-
       - name: Set up app token
         id: app-token
         uses: actions/create-github-app-token@v1
