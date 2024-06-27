@@ -21,6 +21,11 @@ jobs:
           app-id: ${{ vars.BOT_APPID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
       - name: Make a new release
         id: release-drafter
         uses: release-drafter/release-drafter@v6
@@ -31,24 +36,14 @@ jobs:
           tag: '${{ github.ref_name }}'
           publish: true
           disable-autolabeler: true
-
-          
-      # - name: Create a new release
-      #   id: create-release
-      #   uses: actions/create-release@v1
-      #   with:
-      #     tag_name: v1.0.0
-      #     release_name: Release v1.0.0
-      #     body: |
-      #       Changes in this release:
-      #       - Feature 1
-      #       - Feature 2
-      #     draft: false
-      #     prerelease: false
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-          
-      # - name: Upload artifacts
-      #   id: upload-artifacts
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: release-artifacts
+      
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          upload_url: ${{ steps.release-drafter.outputs.upload_url }}
+          asset_path: ./version.txt
+          asset_name: version.txt
+          asset_content_type: plain/text
