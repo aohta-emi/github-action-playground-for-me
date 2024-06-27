@@ -15,7 +15,8 @@ jobs:
     if: ${{ !cancelled() && !failure() }}
     steps:
       - name: Checkout repository
-      - uses: release-drafter/release-drafter@v6
+        id: checkout
+        uses: release-drafter/release-drafter@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
