@@ -23,6 +23,7 @@ jobs:
   bump-version:
     name: Update changelog and bump version
     runs-on: ubuntu-latest
+    needs: check-previous-workflow
     if: ${{ !cancelled() && !failure() }}
     env:
       GIT_AUTHOR_NAME: github-actions[bot]
@@ -71,6 +72,7 @@ jobs:
   release-merge:
     name: Merge Release Branch to main and develop
     runs-on: ubuntu-latest
+    needs: bump-version
     if: ${{ !cancelled() && !failure() }}
     env:
       GIT_AUTHOR_NAME: github-actions[bot]
