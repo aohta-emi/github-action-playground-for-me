@@ -14,11 +14,18 @@ jobs:
       contents: write
     if: ${{ !cancelled() && !failure() }}
     steps:
-      - name: Checkout repository
-        id: checkout
+      - name: Set up app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BOT_APPID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Make a new release
+        id: release-drafter
         uses: release-drafter/release-drafter@v6
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           name: '${{ github.ref_name }}'
           tag: '${{ github.ref_name }}'
