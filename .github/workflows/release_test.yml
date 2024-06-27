@@ -26,7 +26,7 @@ jobs:
   qa-check:
     name: QA Check on release branch
     runs-on: ubuntu-latest
-    if: ${{ ! failure() }}
+    if: ${{ !cancelled() && !failure() }}
     outputs:
       release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
     steps:
