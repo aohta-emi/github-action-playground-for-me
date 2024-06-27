@@ -14,31 +14,31 @@ jobs:
     outputs:
       release_branch: ${{ github.event.workflow_run.outputs.release_branch }}
     steps:
-      - name: Get release branch name
-        id: get-branch
-        uses: actions/github-script@v7
-        with:
-          result-encoding: string
-          script: |
-            const branches = await github.rest.repos.listBranches({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
-            if (releaseBranches.length !== 1) {
-              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
-            }
-            return releaseBranches[0].name;
+      # - name: Get release branch name
+      #   id: get-branch
+      #   uses: actions/github-script@v7
+      #   with:
+      #     result-encoding: string
+      #     script: |
+      #       const branches = await github.rest.repos.listBranches({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #       });
+      #       const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+      #       if (releaseBranches.length !== 1) {
+      #         throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+      #       }
+      #       return releaseBranches[0].name;
             
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.get-branch.outputs.result }}
+          ref: ${{ github.ref_name }}
 
       - name: Run QA tests (TODO)
         id: run-qa-tests
         run: |
-          echo "Running QA tests on branch ${{ steps.get-branch.outputs.result }} ..."
+          echo "Running QA tests on branch ${{ github.ref_name }} ..."
           # Replace this line with actual QA tests
           echo "do some test"
           
@@ -69,32 +69,32 @@ jobs:
       GIT_COMMITTER_NAME: github-actions[bot]
       GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
     steps:
-      - name: Get release branch name
-        id: get-branch
-        uses: actions/github-script@v7
-        with:
-          result-encoding: string
-          script: |
-            const branches = await github.rest.repos.listBranches({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
-            if (releaseBranches.length !== 1) {
-              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
-            }
-            return releaseBranches[0].name;
+      # - name: Get release branch name
+      #   id: get-branch
+      #   uses: actions/github-script@v7
+      #   with:
+      #     result-encoding: string
+      #     script: |
+      #       const branches = await github.rest.repos.listBranches({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #       });
+      #       const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+      #       if (releaseBranches.length !== 1) {
+      #         throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+      #       }
+      #       return releaseBranches[0].name;
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.get-branch.outputs.result }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
           
       - name: Extract version number from branch name
         id: get-version
         run: |
-          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\/v//')
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/release\/v//')
           echo "version=${VERSION}" >> $GITHUB_ENV
 
       - name: Update version.txt
@@ -105,7 +105,7 @@ jobs:
 
       - name: Push changes to release branch
         run: |
-          git push origin "${{ steps.get-branch.outputs.result }}"
+          git push origin "${{ github.ref_name }}"
 
   release-merge:
     name: Merge Release Branch to main and develop
@@ -118,21 +118,21 @@ jobs:
       GIT_COMMITTER_NAME: github-actions[bot]
       GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
     steps:
-      - name: Get release branch name
-        id: get-branch
-        uses: actions/github-script@v7
-        with:
-          result-encoding: string
-          script: |
-            const branches = await github.rest.repos.listBranches({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
-            if (releaseBranches.length !== 1) {
-              throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
-            }
-            return releaseBranches[0].name;
+      # - name: Get release branch name
+      #   id: get-branch
+      #   uses: actions/github-script@v7
+      #   with:
+      #     result-encoding: string
+      #     script: |
+      #       const branches = await github.rest.repos.listBranches({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #       });
+      #       const releaseBranches = branches.data.filter(branch => branch.name.startsWith('release/'));
+      #       if (releaseBranches.length !== 1) {
+      #         throw new Error(`Expected exactly one release branch, but found ${releaseBranches.length}`);
+      #       }
+      #       return releaseBranches[0].name;
 
       - name: Set up app token
         id: app-token
@@ -144,28 +144,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.get-branch.outputs.result }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Merge release branch to main
         run: |
           git checkout main
-          git merge --no-ff "${{ steps.get-branch.outputs.result }}"
+          git merge --no-ff "${{ github.ref_name }}"
           git push origin main
 
       - name: Merge release branch to develop
         run: |
           git checkout develop
-          git merge --no-ff "${{ steps.get-branch.outputs.result }}"
+          git merge --no-ff "${{ github.ref_name }}"
           git push origin develop
 
       - name: Tag the main branch
         run: |
-          VERSION=$(echo "${{ steps.get-branch.outputs.result }}" | sed 's/release\///')
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/release\///')
           git tag -a ${VERSION} -m "Release ${VERSION}"
           git push origin ${VERSION}
 
       - name: Delete release branch
         run: |
-          git push origin --delete "${{ steps.get-branch.outputs.result }}"
+          git push origin --delete "${{ github.ref_name }}"
